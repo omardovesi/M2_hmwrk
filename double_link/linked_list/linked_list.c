@@ -27,6 +27,7 @@ int length_list(node_t* head_list) {
   node_t* current = head_list;
   while (current) {
     len++;
+    current = current->next;
   }
   return len;
 }
@@ -36,7 +37,12 @@ int length_list(node_t* head_list) {
  *
  * given pointer to the head of the list
  */
-void* get_first(node_t* head_list) { return head_list->data; }
+void* get_first(node_t* head_list) { 
+  if (!head_list) {
+    return NULL;
+  }
+  return head_list->data;
+}
 
 /** returns the value of the last element of the list
  *
@@ -72,18 +78,21 @@ void insert_first(node_t** head_list, void* to_add, size_t size) { return; }
  * returns nothing
  */
 void insert_last(node_t** head_list, void* to_add, size_t size) {
-  if (!to_add) {
+  if (!head_list || !to_add) {
     return;
   }
-  node_t* new_element = (node_t*)malloc(sizeof(node_t));
-  void* new_data = malloc(size - 1);
-  memcpy(new_data, to_add, size - 1);
-  new_element->data = new_data;
 
-  if (!(*head_list)) {  // means the list is empty
+  node_t* new_element = malloc(sizeof(node_t));
+  void* new_data = malloc(size);
+  memcpy(new_data, to_add, size);
+
+  new_element->data = new_data;
+  new_element->next = NULL;
+  new_element->prev = NULL;
+
+  // empty list
+  if (!(*head_list)) {  
     *head_list = new_element;
-    new_element->prev = NULL;
-    new_element->next = NULL;
     return;
   }
 
@@ -130,6 +139,9 @@ int remove_element(node_t **head_list, void *to_remove, size_t size) {
       }
       if (curr == *head_list) {
         *head_list = curr->next;
+        if (*head_list) {
+          (*head_list)->prev = NULL;
+        }
       } else {
         curr->prev->next = curr->next;
       }
@@ -148,19 +160,18 @@ int remove_element(node_t **head_list, void *to_remove, size_t size) {
  *
  * returns nothing
  */
-void reverse_helper(node_t** head_list) {
+void reverse(node_t** head_list) {
+  if (!head_list || !*head_list) return;
   node_t* curr = *head_list;
-  node_t* placeholder = NULL;
-  if (curr->next) {
-    while (curr) {
-      if (!curr->next) {
-        *head_list = curr;
-      }
-      curr->prev = curr->next;
-      curr->next = placeholder;
-      placeholder = curr;
-      curr = curr->prev;
+  node_t* tmp = NULL;
+  while (curr) {
+    tmp = curr->prev;
+    curr->prev = curr->next;
+    curr->next = tmp;
+    if (!curr->prev) {       
+      *head_list = curr;
     }
+    curr = curr->prev;       
   }
 }
 
@@ -171,11 +182,11 @@ void reverse_helper(node_t** head_list) {
  *
  * returns nothing
  */
-void reverse(node_t** head_list) {
+/*void reverse(node_t** head_list) {
   if (head_list) {
     reverse_helper(head_list);
   }
-}
+}*/
 
 /**
  * removes the first element of the linked list if it exists
@@ -190,16 +201,16 @@ void* remove_first(node_t** head_list) {
     return NULL;
   }
   node_t* curr = *head_list;
-  *head_list = (*head_list)->next;
+  void* data = curr->data;
+  *head_list = curr->next;
 
   if (*head_list) {
     (*head_list)->prev = NULL;
   }
 
-  free(curr->data);
   free(curr);
 
-  return curr->data;
+  return data;
 }
 
 /** TODO: implement this!
