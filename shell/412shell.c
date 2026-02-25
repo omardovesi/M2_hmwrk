@@ -58,11 +58,46 @@ typedef struct {
  * @param command The parsed command to execute.
  */
 void do_fork(const ParsedCommand* command) {
+    // Safety check: ensure command and command->command are valid
+    if (command == NULL || command->command == NULL) {
+        fprintf(stderr, "Error: Invalid command\n");
+        return;
+    }
+    
     // TODO 1: Use 'fork' to create a child process
+    pid_t child_pid = fork();
 
+    if (child_pid < 0){
+        perror("fork failed");
+        return;
+    }
+
+    // Child process
+    else if (child_pid == 0){
+        // Build argv array (arguments array)
+        char* argv[MAX_ARGS + 2]; //+2 for program name and NULL
+
+        argv[0] = command->command; // First grab the program name
+
+        // Copy Arguments
+        for (int i = 0; i < command->numArgs; i++){
+            argv[i + 1] = command->args[i]; // argv[1]="hello", argv[2]="world"
+        }
+        argv[command->numArgs + 1] = NULL; // End with NULL
+
+        execv(command->command, argv);
+        perror("ERROR: execv failed!");
+        exit(EXIT_FAILURE);
+    }
     // TODO 2: Handle child process case: research file descriptors, 'dup2', and 'execv'
 
     // TODO 3: Handle parent process case: research 'waitpid'
+    else if (child_pid > 0) {
+        // Parent process
+        int status;
+        waitpid(child_pid, &status, 0);
+
+    }
 }
 
 /**
@@ -115,7 +150,7 @@ ParsedCommand parse_command(const char* input) {
  *
  * @return 0 on success.
  */
-int main() {
+int main(void) {
     char input[MAX_INPUT]; // Stores user input
 
     // Main loop: prompt for input, parse, and execute commands until "exit" is entered
